@@ -220,6 +220,7 @@ function App() {
           <a href="#idea">The idea</a>
           <a href="#privacy">Privacy step</a>
           <a href="#explanations">Explanations</a>
+          <a href="#standard">The standard</a>
           <a href="#lab">Run it</a>
           <a href="#read-result">Read result</a>
         </nav>
@@ -264,7 +265,7 @@ function App() {
           <Term
             icon={<Sparkles />}
             title="Explanation"
-            body="A SHAP feature ranking: which columns mattered most to a tree model’s predictions."
+            body="A SHAP feature-attribution summary: which columns moved the tree model’s predictions the most."
           />
         </section>
 
@@ -300,9 +301,11 @@ function App() {
             both models.
           </p>
           <p>
-            You are looking for a tradeoff. A strong result keeps utility high while
-            keeping the protected model’s top features close to the original model’s
-            top features.
+            So “explain” has a narrow meaning here. It does not mean the app found
+            the true causal reason, decoded the model’s internal algorithm, or did
+            GPT-style circuit analysis. It means: for this trained model, SHAP estimated
+            which input columns contributed most to its predictions, then the app checks
+            whether that feature ranking still looks similar after the privacy step.
           </p>
           <ol className="flow-list">
             <li>Train a baseline model on original rows.</li>
@@ -310,6 +313,45 @@ function App() {
             <li>Train the protected-data model.</li>
             <li>Compare model utility and SHAP feature rankings.</li>
           </ol>
+        </Section>
+
+        <Section id="standard" kicker="The standard" title="A useful privacy result has to pass two gates.">
+          <p>
+            The demo is not trying to prove that one explanation is philosophically
+            “right.” It uses a practical XAI standard: the private-data model should
+            still be useful, and its feature-attribution story should not drift too far
+            from the original model’s story.
+          </p>
+          <div className="standard-list">
+            <StandardItem marker="01" title="Utility gate">
+              First ask whether the protected model still performs close to the
+              baseline. If accuracy or R2 collapses, the model may have learned a
+              different weaker task, so comparing explanations becomes less meaningful.
+            </StandardItem>
+            <StandardItem marker="02" title="Explanation gate">
+              Then compare the SHAP rankings. High rank correlation means the same
+              columns are important in roughly the same order. Low rank movement and
+              low distortion mean the importance weights changed less.
+            </StandardItem>
+            <StandardItem marker="03" title="Privacy pressure">
+              Raising k in MDAV or raising Laplace noise should make rows less exact,
+              but it also makes the learning problem harder. Utility loss is not a UI
+              bug; it is the tradeoff this paper is testing.
+            </StandardItem>
+            <StandardItem marker="04" title="Evidence boundary">
+              Hashes and optional Solana anchoring make a result harder to rewrite
+              after the fact. They do not prove that SHAP is the best explanation or
+              that the experiment is statistically complete.
+            </StandardItem>
+          </div>
+          <div className="utility-note">
+            <HelpCircle />
+            <span>
+              If you see privacy preserve the top features but lose a lot of utility,
+              that is a mixed result. The explanation may still look familiar, but it
+              is attached to a less useful model.
+            </span>
+          </div>
         </Section>
 
         <section className="lab-section" id="lab">
@@ -430,6 +472,10 @@ function App() {
             <MetricExplainer icon={<Sigma />} title="Rank movement">
               Average feature-rank movement. Lower means the explanation changed less.
             </MetricExplainer>
+            <MetricExplainer icon={<Sparkles />} title="Explanation distortion">
+              Normalized distance between the original and private SHAP importance
+              weights. Closer to zero means less attribution drift.
+            </MetricExplainer>
             <MetricExplainer icon={<Anchor />} title="Provenance">
               Optional Solana devnet memo anchoring stores artifact hashes. It proves
               what result you showed, not that the ML conclusion is true.
@@ -511,6 +557,26 @@ function MiniMethod({
   );
 }
 
+function StandardItem({
+  marker,
+  title,
+  children
+}: {
+  marker: string;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="standard-item">
+      <span>{marker}</span>
+      <div>
+        <strong>{title}</strong>
+        <p>{children}</p>
+      </div>
+    </div>
+  );
+}
+
 function BackendLine({ health }: { health: "unchecked" | "ok" | "bad" }) {
   return (
     <div className="backend-line" data-state={health}>
@@ -576,7 +642,14 @@ function ResultView({
           value={formatMetric(result.comparison.irregularity)}
           tone={result.comparison.irregularity < 2 ? "good" : "warn"}
         />
+        <Metric
+          label="Importance distortion"
+          value={formatMetric(result.comparison.explanationDistortion)}
+          tone={result.comparison.explanationDistortion <= 0.2 ? "good" : "warn"}
+        />
       </div>
+
+      <ResultMeaning result={result} />
 
       <div className="features-grid">
         <FeatureList title="Before privacy" items={result.baseline.topFeatures} />
@@ -596,6 +669,91 @@ function ResultView({
         </button>
         <code>{anchorCommand}</code>
       </div>
+    </div>
+  );
+}
+
+function ResultMeaning({ result }: { result: ExperimentResult }) {
+  const comparison = result.comparison;
+  const metric = result.baseline.utilityMetric;
+  const utilityClose = comparison.utilityDelta >= -0.03;
+  const rankStable = comparison.rankCorrelation >= 0.65;
+  const movementLow = comparison.irregularity < 2;
+  const distortionLow = comparison.explanationDistortion <= 0.2;
+
+  let headline = "Mixed interpretability result";
+  let body =
+    "The run preserved part of the explanation story, but at least one gate needs review.";
+
+  if (utilityClose && rankStable && movementLow && distortionLow) {
+    headline = "Strong privacy/XAI result";
+    body =
+      "The protected model stayed useful and the SHAP story stayed close to the baseline. This is the result the paper workflow is hoping to find.";
+  } else if (!utilityClose && rankStable) {
+    headline = "Feature story survived, utility did not";
+    body =
+      "The same columns still look important, but the protected model got worse. That makes the explanation comparison weaker because it is attached to a less capable model.";
+  } else if (utilityClose && !rankStable) {
+    headline = "Model still works, explanation drifted";
+    body =
+      "The protected model kept utility, but its feature ranking changed. This is useful evidence that the privacy transform affected what the model appears to rely on.";
+  } else if (!utilityClose && !rankStable) {
+    headline = "Privacy setting is probably too aggressive";
+    body =
+      "The protected model lost utility and the explanation moved. Try a smaller k, less noise, or more trees before treating this as a privacy-preserving explanation.";
+  }
+
+  return (
+    <div className="result-meaning">
+      <span>How to read this run</span>
+      <strong>{headline}</strong>
+      <p>{body}</p>
+      <div className="meaning-checks">
+        <MeaningCheck
+          label="Utility"
+          value={`${formatSignedMetric(comparison.utilityDelta)} ${metric}`}
+          state={utilityClose ? "pass" : "review"}
+        >
+          Close means within about 0.03 of the baseline. Bigger losses mean the private
+          training data changed the task too much.
+        </MeaningCheck>
+        <MeaningCheck
+          label="Ranking"
+          value={formatMetric(comparison.rankCorrelation)}
+          state={rankStable ? "pass" : "review"}
+        >
+          Spearman correlation near 1 means the feature order stayed similar. Near 0
+          means the explanation order is unstable.
+        </MeaningCheck>
+        <MeaningCheck
+          label="Movement"
+          value={formatMetric(comparison.irregularity)}
+          state={movementLow && distortionLow ? "pass" : "review"}
+        >
+          Lower rank movement and lower attribution distortion mean the SHAP story
+          changed less after privacy.
+        </MeaningCheck>
+      </div>
+    </div>
+  );
+}
+
+function MeaningCheck({
+  label,
+  value,
+  state,
+  children
+}: {
+  label: string;
+  value: string;
+  state: "pass" | "review";
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="meaning-check" data-state={state}>
+      <span>{label}</span>
+      <strong>{value}</strong>
+      <p>{children}</p>
     </div>
   );
 }
@@ -720,6 +878,11 @@ function colabUrl(dataset: DatasetId): string {
 function formatMetric(value: number): string {
   if (!Number.isFinite(value)) return "n/a";
   return value.toFixed(3);
+}
+
+function formatSignedMetric(value: number): string {
+  if (!Number.isFinite(value)) return "n/a";
+  return `${value >= 0 ? "+" : ""}${value.toFixed(3)}`;
 }
 
 function shortHash(value: string): string {
