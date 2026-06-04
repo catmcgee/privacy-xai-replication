@@ -6,16 +6,22 @@ import {
   ArrowDownToLine,
   BadgeCheck,
   BookOpen,
+  BrainCircuit,
   Database,
   ExternalLink,
   FileJson,
   FlaskConical,
+  GitCompareArrows,
   Github,
+  HelpCircle,
+  Layers3,
   Loader2,
+  LockKeyhole,
   Radio,
   RefreshCcw,
   Server,
   Shield,
+  Sigma,
   SlidersHorizontal,
   Sparkles,
   Terminal,
@@ -168,7 +174,7 @@ function App() {
         setDatasets(body.datasets);
       }
     } catch {
-      // The fallback list keeps the UI usable while the Space is offline.
+      // Keep the page teachable even before the Space is deployed.
     }
   }
 
@@ -208,200 +214,270 @@ function App() {
 
   return (
     <main className="app">
-      <header className="top">
+      <header className="topbar">
         <div className="brand">
-          <div className="mark">
-            <Server />
+          <div className="brand-mark">
+            <BrainCircuit />
           </div>
           <div>
-            <div className="brand-title">Privacy XAI Space Demo</div>
-            <div className="brand-sub">Hugging Face hosted runner for SHAP privacy experiments</div>
+            <strong>Privacy XAI Replication</strong>
+            <span>Explainer-first demo for engineers</span>
           </div>
         </div>
-        <div className="top-actions">
+        <nav className="top-actions" aria-label="Project actions">
           <StatusPill state={health} />
-          <button className="ghost" type="button" onClick={() => void checkHealth()}>
+          <button type="button" onClick={() => void checkHealth()}>
             <RefreshCcw />
             Ping Space
           </button>
-        </div>
+          <a href="#lab">
+            <FlaskConical />
+            Run demo
+          </a>
+        </nav>
       </header>
 
-      <section className="hero">
-        <div className="hero-copy">
-          <span className="eyebrow">Hosted demo, not a notebook</span>
-          <h1>Send a privacy experiment to Hugging Face and inspect the explanation drift.</h1>
+      <section className="opening">
+        <div className="opening-copy">
+          <span className="kicker">The question</span>
+          <h1>If we hide the user rows, do the explanations still mean anything?</h1>
           <p>
-            This is a software-engineer version of the paper workflow. The Space fetches
-            a tabular dataset, applies a privacy transform, trains tree models, computes
-            SHAP feature rankings, and returns one JSON result you can inspect or anchor.
+            This project turns a privacy-preserving explainable AI paper into a
+            hosted demo. You do not need to know SHAP, k-anonymity, or ML privacy
+            first. Read the story, run the Space, then inspect what changed.
+          </p>
+        </div>
+        <div className="truth-panel">
+          <span>What this is</span>
+          <strong>Private user data + public model behavior</strong>
+          <p>
+            The backend transforms tabular datasets before retraining tree models.
+            The model is not secret. The experiment asks whether feature-level
+            explanations survive after privacy protection.
+          </p>
+          <div className="not-this">
+            <HelpCircle />
+            <span>Not private model weights. Not neural circuit analysis. Not a proof that the science is correct.</span>
+          </div>
+        </div>
+      </section>
+
+      <section className="story-strip" aria-label="Experiment walkthrough">
+        <StoryStep
+          icon={<Database />}
+          number="01"
+          title="Start with rows"
+          body="A dataset contains individual records: biomarkers, survey answers, or housing attributes."
+        />
+        <StoryStep
+          icon={<LockKeyhole />}
+          number="02"
+          title="Blur the records"
+          body="MDAV groups nearby rows into representatives. Laplace noise perturbs numeric columns."
+        />
+        <StoryStep
+          icon={<Layers3 />}
+          number="03"
+          title="Train again"
+          body="The Space trains one tree model on original data and one on privacy-protected data."
+        />
+        <StoryStep
+          icon={<GitCompareArrows />}
+          number="04"
+          title="Compare explanations"
+          body="TreeSHAP ranks the most influential features in both models. Similar ranks mean the explanation survived."
+        />
+      </section>
+
+      <section className="primer">
+        <div className="primer-lead">
+          <span className="kicker">How to read the output</span>
+          <h2>The demo is a tradeoff meter, not a magic privacy certificate.</h2>
+        </div>
+        <div className="primer-grid">
+          <PrimerCard
+            icon={<Activity />}
+            title="Utility"
+            body="Did the private-data model still predict well? The UI reports accuracy for classification and R2 for regression."
+          />
+          <PrimerCard
+            icon={<Sparkles />}
+            title="SHAP rank correlation"
+            body="Did the same features stay important? A higher correlation means the protected explanation resembles the baseline."
+          />
+          <PrimerCard
+            icon={<Sigma />}
+            title="Rank movement"
+            body="How much did feature order move? Lower movement means the story told by the explanation changed less."
+          />
+          <PrimerCard
+            icon={<Anchor />}
+            title="Provenance"
+            body="The Solana memo stores hashes of the run artifact. It records what was shown, not whether the model was right."
+          />
+        </div>
+      </section>
+
+      <section className="lab" id="lab">
+        <div className="lab-intro">
+          <span className="kicker">Runnable lab</span>
+          <h2>Send one typed request to the Hugging Face Space.</h2>
+          <p>
+            The frontend does not execute notebooks and does not accept arbitrary
+            Python. It sends a small JSON request to a parameterized runner.
           </p>
         </div>
 
-        <div className="space-console">
-          <SectionHead icon={<Radio />} label="Runner" title="Hugging Face Space" compact />
-          <div className="endpoint-row">
-            <span>Base URL</span>
-            <code>{SPACE_DISPLAY}</code>
-          </div>
-          <div className="endpoint-row">
-            <span>Request</span>
-            <code>POST {API_BASE}/run</code>
-          </div>
-          <div className="endpoint-status" data-state={health}>
-            <strong>{health === "ok" ? "Ready" : health === "bad" ? "Offline" : "Unchecked"}</strong>
-            <span>
-              {health === "ok"
-                ? "The frontend can reach the Space API."
-                : "Run the local Space or set VITE_SPACE_URL to a hosted HF Space."}
-            </span>
-          </div>
-          <div className="space-actions">
-            {SPACE_URL ? (
-              <a href={SPACE_URL} target="_blank" rel="noreferrer">
-                <ExternalLink />
-                Open Space
-              </a>
+        <div className="lab-grid">
+          <aside className="control-panel">
+            <SectionHead icon={<SlidersHorizontal />} label="Request builder" title="Choose a run" />
+
+            <div className="field">
+              <span>Dataset served by the Space</span>
+              <div className="dataset-grid">
+                {datasets.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    data-active={dataset === item.id}
+                    onClick={() => setDataset(item.id)}
+                  >
+                    <strong>{item.label}</strong>
+                    <em>
+                      {item.task} / {item.sourceNote}
+                    </em>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="method-row" aria-label="Privacy method">
+              <button
+                type="button"
+                data-active={method === "mdav"}
+                onClick={() => setMethod("mdav")}
+              >
+                <Shield />
+                <span>MDAV groups</span>
+              </button>
+              <button
+                type="button"
+                data-active={method === "laplace"}
+                onClick={() => setMethod("laplace")}
+              >
+                <Waves />
+                <span>Laplace noise</span>
+              </button>
+            </div>
+
+            <div className="slider-stack">
+              {method === "mdav" ? (
+                <Slider
+                  label="k-anonymity"
+                  value={k}
+                  min={1}
+                  max={20}
+                  step={1}
+                  onChange={setK}
+                  explain="Higher k groups more rows together. Stronger privacy, more distortion."
+                />
+              ) : (
+                <Slider
+                  label="Noise scale"
+                  value={noiseScale}
+                  min={0.1}
+                  max={12}
+                  step={0.1}
+                  onChange={setNoiseScale}
+                  explain="Higher scale adds more noise. Stronger masking, weaker fidelity."
+                />
+              )}
+              <Slider
+                label="Forest size"
+                value={nEstimators}
+                min={25}
+                max={300}
+                step={25}
+                onChange={setNEstimators}
+                explain="More trees smooth out noise but take longer on the hosted Space."
+              />
+            </div>
+
+            <div className="dataset-note">
+              <Database />
+              <div>
+                <strong>{datasetInfo.description}</strong>
+                <span>{datasetInfo.paperRole}</span>
+              </div>
+            </div>
+
+            <button className="run-button" type="button" onClick={() => void run()} disabled={busy}>
+              {busy ? <Loader2 className="spin" /> : <FlaskConical />}
+              {busy ? "Running on Hugging Face..." : "Run the experiment"}
+            </button>
+            {error && <div className="error">{error}</div>}
+          </aside>
+
+          <div className="lab-main">
+            <div className="space-card">
+              <SectionHead icon={<Radio />} label="Backend" title="Space connection" compact />
+              <div className="endpoint-grid">
+                <EndpointLine label="Base URL" value={SPACE_DISPLAY} />
+                <EndpointLine label="Request" value={`POST ${API_BASE}/run`} />
+                <div className="health-card" data-state={health}>
+                  <strong>{health === "ok" ? "Space reachable" : health === "bad" ? "Space offline" : "Not checked"}</strong>
+                  <span>
+                    {health === "ok"
+                      ? "The browser can reach the API for dataset metadata and runs."
+                      : "Deploy the Space and set VITE_SPACE_URL, or run the backend locally."}
+                  </span>
+                </div>
+              </div>
+              {SPACE_URL ? (
+                <a className="space-link" href={SPACE_URL} target="_blank" rel="noreferrer">
+                  <ExternalLink />
+                  Open Hugging Face Space
+                </a>
+              ) : (
+                <div className="space-link muted-link">Set VITE_SPACE_URL for the hosted Space.</div>
+              )}
+            </div>
+
+            {!result ? (
+              <EmptyResult payload={runPayload} />
             ) : (
-              <span className="disabled-action">Set VITE_SPACE_URL for hosted Space</span>
+              <ResultView result={result} onDownload={downloadResult} />
             )}
           </div>
         </div>
       </section>
 
-      <section className="workspace">
-        <div className="control-panel">
-          <SectionHead icon={<SlidersHorizontal />} label="Experiment" title="Configure one run" />
-
-          <div className="field">
-            <span>Dataset served by the Space</span>
-            <div className="dataset-grid">
-              {datasets.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  data-active={dataset === item.id}
-                  onClick={() => setDataset(item.id)}
-                >
-                  <strong>{item.label}</strong>
-                  <em>
-                    {item.task} · {item.sourceNote}
-                  </em>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="method-row">
-            <button
-              type="button"
-              data-active={method === "mdav"}
-              onClick={() => setMethod("mdav")}
-            >
-              <Shield />
-              <span>MDAV / k-anonymity</span>
-            </button>
-            <button
-              type="button"
-              data-active={method === "laplace"}
-              onClick={() => setMethod("laplace")}
-            >
-              <Waves />
-              <span>Laplace noise</span>
-            </button>
-          </div>
-
-          <div className="slider-stack">
-            {method === "mdav" ? (
-              <Slider
-                label="k-anonymity"
-                value={k}
-                min={1}
-                max={20}
-                step={1}
-                onChange={setK}
-                explain="Higher k groups more nearby rows together. Stronger privacy, more distortion."
-              />
-            ) : (
-              <Slider
-                label="Noise scale"
-                value={noiseScale}
-                min={0.1}
-                max={12}
-                step={0.1}
-                onChange={setNoiseScale}
-                explain="Higher scale adds more Laplace noise. Stronger masking, weaker fidelity."
-              />
-            )}
-            <Slider
-              label="Forest size"
-              value={nEstimators}
-              min={25}
-              max={300}
-              step={25}
-              onChange={setNEstimators}
-              explain="More trees smooth out noise but take longer on the hosted Space."
-            />
-          </div>
-
-          <div className="dataset-note">
-            <Database />
-            <div>
-              <strong>{datasetInfo.description}</strong>
-              <span>{datasetInfo.paperRole}</span>
-            </div>
-          </div>
-
-          <button className="run" type="button" onClick={() => void run()} disabled={busy}>
-            {busy ? <Loader2 className="spin" /> : <FlaskConical />}
-            {busy ? "Running on Hugging Face..." : "Run on Hugging Face Space"}
-          </button>
-          {error && <div className="error">{error}</div>}
+      <section className="boundary">
+        <div>
+          <span className="kicker">Boundary</span>
+          <h2>What a realistic reader should conclude</h2>
         </div>
-
-        <div className="result-panel">
-          {!result ? (
-            <EmptyResult payload={runPayload} />
-          ) : (
-            <ResultView result={result} onDownload={downloadResult} />
-          )}
-        </div>
-      </section>
-
-      <section className="explainer-band">
-        <div className="band-title">
-          <span className="eyebrow">Read this first</span>
-          <h2>Interpretability here means “can the explanation survive private data?”</h2>
-        </div>
-        <div className="concept-grid">
-          <ConceptCard
-            icon={<Shield />}
-            title="Privacy transform"
-            body="MDAV replaces rows with nearby group averages. Laplace adds numeric noise. Both make an individual row harder to recover."
+        <div className="boundary-grid">
+          <BoundaryItem
+            title="Useful claim"
+            body="You can demo whether privacy transformations preserve feature-attribution explanations on tabular tree models."
           />
-          <ConceptCard
-            icon={<Sparkles />}
-            title="SHAP explanation"
-            body="SHAP ranks input columns by how much they contributed to the tree model’s predictions. It is feature attribution, not neural circuit analysis."
+          <BoundaryItem
+            title="Not enough"
+            body="The result does not prove the dataset is private against every attack or that the explanation is causally faithful."
           />
-          <ConceptCard
-            icon={<Activity />}
-            title="Tradeoff"
-            body="A good run keeps prediction utility high and keeps the protected explanation close to the baseline explanation."
-          />
-          <ConceptCard
-            icon={<Anchor />}
-            title="Solana provenance"
-            body="Optional devnet anchoring stores hashes of the dataset, manifest, and result. It makes the artifact harder to quietly rewrite."
+          <BoundaryItem
+            title="Why engineers may care"
+            body="It turns an academic notebook workflow into a repeatable API artifact with hashes and optional chain provenance."
           />
         </div>
       </section>
 
       <footer className="footer">
-        <span>Colab is only for reading the original notebooks.</span>
+        <span>Colab is for reading the original notebooks; the demo path is the Space API.</span>
         <a href={colabUrl(dataset)} target="_blank" rel="noreferrer">
           <BookOpen />
-          Open matching Colab
+          Matching Colab
         </a>
         <a
           href="https://github.com/bozorgpanah/The-Explainable-Machine-Learning-Model-withPrivacy"
@@ -426,17 +502,17 @@ function ResultView({
   const metric = result.baseline.utilityMetric;
   const anchorCommand = `npm run anchor -- results/${result.manifest.manifestHash}.json`;
   return (
-    <div className="result">
-      <SectionHead icon={<BadgeCheck />} label="Space response" title="Experiment result" />
-      <div className="result-story">
+    <div className="result-card">
+      <SectionHead icon={<BadgeCheck />} label="Space response" title="What happened?" />
+      <div className="result-summary">
         <strong>{result.privacy.method}</strong>
         <span>{result.comparison.plainEnglish}</span>
       </div>
 
       <div className="metric-grid">
-        <Metric label={`Baseline ${metric}`} value={formatMetric(result.baseline.utility)} tone="plain" />
+        <Metric label={`Original ${metric}`} value={formatMetric(result.baseline.utility)} tone="plain" />
         <Metric
-          label={`Private-data ${metric}`}
+          label={`Private ${metric}`}
           value={formatMetric(result.protected.utility)}
           tone={result.comparison.utilityDelta >= -0.03 ? "good" : "warn"}
         />
@@ -452,32 +528,30 @@ function ResultView({
         />
       </div>
 
-      <div className="compare">
-        <FeatureList title="Original data model" items={result.baseline.topFeatures} />
-        <FeatureList title="Private-data model" items={result.protected.topFeatures} />
+      <div className="feature-compare">
+        <FeatureList title="Explanation before privacy" items={result.baseline.topFeatures} />
+        <FeatureList title="Explanation after privacy" items={result.protected.topFeatures} />
       </div>
 
-      <div className="response-grid">
-        <div className="response-card">
-          <FileJson />
-          <span>Dataset</span>
-          <strong>
-            {result.dataset.rows.toLocaleString()} rows · {result.dataset.features} features
-          </strong>
-          <code>{shortHash(result.dataset.hash)}</code>
-        </div>
-        <div className="response-card">
-          <Terminal />
-          <span>Manifest hash</span>
-          <strong>{shortHash(result.manifest.manifestHash)}</strong>
-          <code>{result.latencyMs.toLocaleString()} ms Space latency</code>
-        </div>
-        <div className="response-card">
-          <BadgeCheck />
-          <span>Result hash</span>
-          <strong>{shortHash(result.resultHash)}</strong>
-          <code>{result.schema}</code>
-        </div>
+      <div className="artifact-grid">
+        <ArtifactLine
+          icon={<FileJson />}
+          label="Dataset artifact"
+          primary={`${result.dataset.rows.toLocaleString()} rows / ${result.dataset.features} features`}
+          secondary={shortHash(result.dataset.hash)}
+        />
+        <ArtifactLine
+          icon={<Terminal />}
+          label="Manifest"
+          primary={shortHash(result.manifest.manifestHash)}
+          secondary={`${result.latencyMs.toLocaleString()} ms Space latency`}
+        />
+        <ArtifactLine
+          icon={<BadgeCheck />}
+          label="Result hash"
+          primary={shortHash(result.resultHash)}
+          secondary={result.schema}
+        />
       </div>
 
       <div className="actions">
@@ -515,27 +589,62 @@ function ResultView({
 
 function EmptyResult({ payload }: { payload: Record<string, unknown> }) {
   return (
-    <div className="empty">
-      <SectionHead icon={<Terminal />} label="Pending request" title="What the Space will run" />
-      <div className="request-preview">
-        <code>{JSON.stringify(payload, null, 2)}</code>
-      </div>
-      <div className="empty-steps">
-        <Step label="1" title="Train baseline" body="Random forest on the original dataset." />
-        <Step label="2" title="Protect rows" body="MDAV or Laplace transforms the training data." />
-        <Step label="3" title="Compare SHAP" body="Feature rankings reveal whether the explanation changed." />
+    <div className="request-card">
+      <SectionHead icon={<Terminal />} label="Pending request" title="The JSON that will be sent" />
+      <code>{JSON.stringify(payload, null, 2)}</code>
+      <div className="readout">
+        <span>When this comes back, look for two things:</span>
+        <strong>Did utility stay high, and did SHAP still rank the same features?</strong>
       </div>
     </div>
   );
 }
 
-function Step({ label, title, body }: { label: string; title: string; body: string }) {
+function StoryStep({
+  icon,
+  number,
+  title,
+  body
+}: {
+  icon: React.ReactNode;
+  number: string;
+  title: string;
+  body: string;
+}) {
   return (
-    <div className="step">
-      <span>{label}</span>
+    <article className="story-step">
+      <div className="story-icon">{icon}</div>
+      <span>{number}</span>
+      <h3>{title}</h3>
+      <p>{body}</p>
+    </article>
+  );
+}
+
+function PrimerCard({
+  icon,
+  title,
+  body
+}: {
+  icon: React.ReactNode;
+  title: string;
+  body: string;
+}) {
+  return (
+    <article className="primer-card">
+      <div>{icon}</div>
+      <h3>{title}</h3>
+      <p>{body}</p>
+    </article>
+  );
+}
+
+function BoundaryItem({ title, body }: { title: string; body: string }) {
+  return (
+    <article className="boundary-item">
       <strong>{title}</strong>
       <p>{body}</p>
-    </div>
+    </article>
   );
 }
 
@@ -557,6 +666,15 @@ function SectionHead({
         <span>{label}</span>
         <h2>{title}</h2>
       </div>
+    </div>
+  );
+}
+
+function EndpointLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="endpoint-line">
+      <span>{label}</span>
+      <code>{value}</code>
     </div>
   );
 }
@@ -632,20 +750,23 @@ function FeatureList({ title, items }: { title: string; items: FeatureImportance
   );
 }
 
-function ConceptCard({
+function ArtifactLine({
   icon,
-  title,
-  body
+  label,
+  primary,
+  secondary
 }: {
   icon: React.ReactNode;
-  title: string;
-  body: string;
+  label: string;
+  primary: string;
+  secondary: string;
 }) {
   return (
-    <div className="concept">
+    <div className="artifact-line">
       <div>{icon}</div>
-      <h3>{title}</h3>
-      <p>{body}</p>
+      <span>{label}</span>
+      <strong>{primary}</strong>
+      <code>{secondary}</code>
     </div>
   );
 }
