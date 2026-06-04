@@ -16,7 +16,6 @@ import {
   Loader2,
   LockKeyhole,
   Radio,
-  RefreshCcw,
   Shield,
   Sigma,
   SlidersHorizontal,
@@ -211,28 +210,6 @@ function App() {
 
   return (
     <main className="app">
-      <aside className="rail" aria-label="Reading path">
-        <a className="wordmark" href="#top" aria-label="Privacy XAI home">
-          <span>PX</span>
-          <strong>Privacy XAI</strong>
-        </a>
-        <nav>
-          <a href="#idea">The idea</a>
-          <a href="#privacy">Privacy step</a>
-          <a href="#explanations">Explanations</a>
-          <a href="#standard">The standard</a>
-          <a href="#lab">Run it</a>
-          <a href="#read-result">Read result</a>
-        </nav>
-        <div className="rail-status">
-          <StatusPill state={health} />
-          <button type="button" onClick={() => void checkHealth()}>
-            <RefreshCcw />
-            Check backend
-          </button>
-        </div>
-      </aside>
-
       <article className="article" id="top">
         <header className="intro" id="idea">
           <span className="eyebrow">A guided demo for software engineers</span>
@@ -409,6 +386,7 @@ function App() {
                     Laplace noise
                   </button>
                 </div>
+                <ControlExplainer method={method} />
               </div>
 
               {method === "mdav" ? (
@@ -419,7 +397,7 @@ function App() {
                   max={20}
                   step={1}
                   onChange={setK}
-                  explain="Higher k means more rows are averaged together."
+                  explain="Minimum crowd size before records are averaged. Higher k hides individuals more, but can wash out useful signal."
                 />
               ) : (
                 <Slider
@@ -429,7 +407,7 @@ function App() {
                   max={12}
                   step={0.1}
                   onChange={setNoiseScale}
-                  explain="Higher scale means more numeric perturbation."
+                  explain="Amount of random numeric jitter added before training. Higher scale masks rows more, but can move the model and SHAP rankings."
                 />
               )}
               <Slider
@@ -439,7 +417,7 @@ function App() {
                 max={300}
                 step={25}
                 onChange={setNEstimators}
-                explain="More trees can smooth noise but take longer."
+                explain="Number of trees in the random forest. This is not a privacy setting; more trees usually steadies the comparison but takes longer."
               />
 
               <button className="run-button" type="button" onClick={() => void run()} disabled={busy}>
@@ -594,6 +572,44 @@ function ControlHeader({ icon, title }: { icon: React.ReactNode; title: string }
     <div className="control-header">
       <div>{icon}</div>
       <h3>{title}</h3>
+    </div>
+  );
+}
+
+function ControlExplainer({ method }: { method: Method }) {
+  const methodDetail =
+    method === "mdav"
+      ? {
+          label: "k-anonymity",
+          text:
+            "k is the minimum group size. At k=5, a protected row is represented by an average of five similar rows, so one exact person is harder to isolate."
+        }
+      : {
+          label: "Noise scale",
+          text:
+            "Noise scale controls the size of random Laplace noise added to numeric columns before training. Larger values make rows less exact."
+        };
+
+  return (
+    <div className="control-explainer" aria-label="Control explanations">
+      <div>
+        <strong>Privacy method</strong>
+        <p>
+          Choose how the training table is changed before the private model is trained.
+          MDAV groups similar rows; Laplace keeps rows separate but perturbs their numbers.
+        </p>
+      </div>
+      <div>
+        <strong>{methodDetail.label}</strong>
+        <p>{methodDetail.text}</p>
+      </div>
+      <div>
+        <strong>Forest size</strong>
+        <p>
+          The number of decision trees. It can make utility and SHAP scores less noisy,
+          but it does not add privacy by itself.
+        </p>
+      </div>
     </div>
   );
 }
@@ -853,15 +869,6 @@ function HashLine({ icon, label, value }: { icon: React.ReactNode; label: string
       <div>{icon}</div>
       <span>{label}</span>
       <code>{shortHash(value)}</code>
-    </div>
-  );
-}
-
-function StatusPill({ state }: { state: "unchecked" | "ok" | "bad" }) {
-  return (
-    <div className="status" data-state={state}>
-      <span />
-      {state === "ok" ? "Space online" : state === "bad" ? "Space offline" : "Space unchecked"}
     </div>
   );
 }
