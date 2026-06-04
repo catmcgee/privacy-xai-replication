@@ -1,8 +1,8 @@
 ---
 title: Privacy XAI Replication Runner
 emoji: 🔎
-colorFrom: emerald
-colorTo: slate
+colorFrom: green
+colorTo: gray
 sdk: docker
 app_port: 7860
 pinned: false
@@ -35,4 +35,3 @@ experiment request to `POST /run`.
 pip install -r requirements.txt
 uvicorn app:app --reload --port 7860
 ```
-

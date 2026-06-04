@@ -53,7 +53,13 @@ Open `http://localhost:5173`.
 
 ## Hosted Space
 
-Create a Hugging Face Docker Space and push the `space/` folder. Then set:
+The production backend Space is:
+
+```text
+https://catmcgee-privacy-xai-replication-runner.hf.space
+```
+
+To deploy your own Hugging Face Docker Space, push the `space/` folder. Then set:
 
 ```text
 VITE_SPACE_URL=https://<your-space>.hf.space
