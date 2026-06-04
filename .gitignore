@@ -3,9 +3,10 @@ dist/
 .env
 .env.local
 .DS_Store
+.vercel/
 .venv/
 __pycache__/
 *.pyc
 .local/
 results/
-
+.vercel
