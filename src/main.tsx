@@ -9,6 +9,7 @@ import {
   Database,
   ExternalLink,
   FileJson,
+  FileText,
   FlaskConical,
   Github,
   GitCompareArrows,
@@ -95,6 +96,7 @@ interface ExperimentResult {
 const SPACE_URL = (import.meta.env.VITE_SPACE_URL || "").replace(/\/$/, "");
 const API_BASE = SPACE_URL || "/space";
 const SPACE_DISPLAY = SPACE_URL || "local dev proxy";
+const PAPER_URL = "https://link.springer.com/article/10.1007/s13748-024-00315-2";
 
 const FALLBACK_DATASETS: DatasetInfo[] = [
   {
@@ -215,9 +217,12 @@ function App() {
           <span className="eyebrow">A guided demo for software engineers</span>
           <h1>Can a model stay explainable after the user data is made private?</h1>
           <p className="lead">
-            This is a practical walk-through of a privacy-preserving explainable AI
-            paper. You will read the setup, run the hosted backend, and inspect whether
-            privacy changed the model’s explanation.
+            This is a practical walk-through of{" "}
+            <a className="paper-link" href={PAPER_URL} target="_blank" rel="noreferrer">
+              Explainable machine learning models with privacy
+            </a>
+            . You will read the setup, run the hosted backend, and inspect whether
+            privacy changed the model's explanation.
           </p>
           <div className="plain-note">
             <HelpCircle />
@@ -462,7 +467,11 @@ function App() {
         </Section>
 
         <footer className="footer">
-          <span>Want the original notebooks?</span>
+          <span>Want the source material?</span>
+          <a href={PAPER_URL} target="_blank" rel="noreferrer">
+            <FileText />
+            Paper
+          </a>
           <a href={colabUrl(dataset)} target="_blank" rel="noreferrer">
             <BookOpen />
             Matching Colab

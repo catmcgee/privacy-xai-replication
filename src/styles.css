@@ -97,6 +97,16 @@ h1 {
   font-size: 21px;
   line-height: 1.55;
 }
+.paper-link {
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+.paper-link:hover {
+  color: var(--accent);
+}
 .plain-note {
   max-width: 760px;
   margin-top: 28px;
