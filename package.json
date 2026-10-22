@@ -17,7 +17,7 @@
     "lucide-react": "^0.468.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "vite": "^6.0.5"
+    "vite": "^6.4.4"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
@@ -25,6 +25,15 @@
     "@types/react-dom": "^18.3.5",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
+  },
+  "overrides": {
+    "source-map-js@<1.2.2": "^1.2.2",
+    "stream-json@<3.6.0": "^3.6.0",
+    "baseline-browser-mapping@<2.11.0": "^2.11.0",
+    "browserslist@<4.28.7": "^4.28.7",
+    "nanoid@<3.3.18": "^3.3.18",
+    "postcss@<8.5.23": "^8.5.23",
+    "esbuild@<0.28.1": "^0.28.1",
+    "uuid@<11.1.1": "^11.1.1"
   }
 }
-
